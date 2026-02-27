@@ -30,7 +30,8 @@ void QmlFileWatcher::watchDirectory(const QString &path)
         return;
     }
 
-    if (!watcher_->addPath(path)) {
+    const bool added = watcher_->addPath(path);
+    if (!added && !watcher_->directories().contains(path)) {
         qWarning() << "QmlFileWatcher: Failed to watch directory:" << path;
         return;
     }

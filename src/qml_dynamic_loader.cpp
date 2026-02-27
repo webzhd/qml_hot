@@ -21,10 +21,18 @@ bool QmlDynamicLoader::reloadLoader(QObject *loaderObj, const QString &qmlFilePa
     qDebug() << "QmlDynamicLoader: Reloading" << loaderObj->objectName()
              << "with" << qmlFilePath;
 
-    // Reset source to empty first so the Loader registers a true change
+    // Reset source to empty first so the cache can be cleared cleanly
     loaderObj->setProperty("source", QVariant(QUrl()));
-    loaderObj->setProperty("source", QUrl::fromLocalFile(qmlFilePath));
 
-    qDebug() << "QmlDynamicLoader: Reload triggered for" << loaderObj->objectName();
+    // Clear component cache after unloading the old component
+    engine_->clearComponentCache();
+    qDebug() << "QmlDynamicLoader: Component cache cleared";
+
+    // Set new source to reload from disk
+    const QUrl newUrl = QUrl::fromLocalFile(qmlFilePath);
+    loaderObj->setProperty("source", newUrl);
+
+    qDebug() << "QmlDynamicLoader: Reload triggered for" << loaderObj->objectName()
+             << "source:" << newUrl;
     return true;
 }
