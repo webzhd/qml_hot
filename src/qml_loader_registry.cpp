@@ -24,15 +24,13 @@ void QmlLoaderRegistry::updateAll()
 {
     qDebug() << "QmlLoaderRegistry: Updating all loaders...";
 
-    // Clear the component cache once before reloading all loaders
-    engine_->clearComponentCache();
-
     for (auto it = loader_map_.constBegin(); it != loader_map_.constEnd(); ++it) {
         QObject *loaderObj = findLoader(it.key());
         if (!loaderObj) {
             qWarning() << "QmlLoaderRegistry: Loader not found:" << it.key();
             continue;
         }
+        qDebug() << "QmlLoaderRegistry: Reloading" << it.key() << "->" << it.value();
         dynamic_loader_->reloadLoader(loaderObj, it.value());
     }
 

@@ -20,5 +20,13 @@ ApplicationWindow {
         objectName: "contentLoader"
         anchors.fill: parent
         source: "ContentView.qml"
+
+        onStatusChanged: {
+            if (status === Loader.Error) {
+                console.error("contentLoader: Error loading source:", source)
+            } else if (status === Loader.Ready) {
+                console.log("contentLoader: Successfully loaded:", source)
+            }
+        }
     }
 }
