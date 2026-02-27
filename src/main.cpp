@@ -7,6 +7,7 @@
 
 int main(int argc, char *argv[])
 {
+    qputenv("QT_QUICK_CONTROLS_STYLE", "Material");
     QGuiApplication app(argc, argv);
     
     // ===== 创建QML引擎 =====

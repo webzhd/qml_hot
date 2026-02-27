@@ -19,7 +19,7 @@ ApplicationWindow {
     
     // ===== 添加重新加载函数 =====
     function reloadContent() {
-        qDebug("Reloading content from QML...")
+        console.log("Reloading content from QML...")
         contentLoader.sourceComponent = null
         contentLoader.sourceComponent = contentComponent
     }
