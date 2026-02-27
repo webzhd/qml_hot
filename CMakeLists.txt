@@ -34,13 +34,20 @@ set(PROJECT_SOURCES
     src/application.cpp
     src/data_model.h
     src/data_model.cpp
-    src/qml_reloader.h
-    src/qml_reloader.cpp
+    src/qml_file_watcher.h
+    src/qml_file_watcher.cpp
+    src/qml_dynamic_loader.h
+    src/qml_dynamic_loader.cpp
+    src/qml_loader_registry.h
+    src/qml_loader_registry.cpp
+    src/qml_hot_reload_system.h
+    src/qml_hot_reload_system.cpp
 )
 
 # ===== QML文件列表 =====
 set(PROJECT_QML_FILES
     qml/main.qml
+    qml/ContentView.qml
 )
 
 # ===== 创建可执行程序 =====
