@@ -29,13 +29,27 @@ int main(int argc, char *argv[])
     }
 
     // ===== 启动热更新系统 =====
-    QmlHotReloadSystem reloadSystem(&engine);
-    reloadSystem.watchDirectory(qmlSourceDir);
-    reloadSystem.addLoader("contentLoader", qmlSourceDir + "/ContentView.qml");
+    QmlHotReloadSystem *reloadSystem = new QmlHotReloadSystem(&engine);
+    reloadSystem->watchDirectory(qmlSourceDir);
+    reloadSystem->addLoader("contentLoader", qmlSourceDir + "/ContentView.qml");
+    
+    // ===== 加载初始内容（关键！）=====
+    // 这样打开时就能看到内容，而不是白屏
+    QObject *mainWindow = nullptr;
+    for (QObject *root : engine.rootObjects()) {
+        if (root->objectName() == "mainWindow") {
+            mainWindow = root;
+            break;
+        }
+    }
+    
+    if (mainWindow) {
+        qDebug() << "Initializing content on startup...";
+        QMetaObject::invokeMethod(reloadSystem, "triggerInitialLoad", Qt::QueuedConnection);
+    }
 
     qDebug() << "Application started successfully";
     qDebug() << "Watching for QML file changes...";
 
-    // ===== 运行应用事件循环 =====
     return app.exec();
 }

@@ -59,7 +59,7 @@ Item {
 
             Layout.alignment: Qt.AlignHCenter
 
-            text: "计数器示"
+            text: "计数器112示 "
             color: "#000000"
             font.pixelSize: 28
             font.bold: true

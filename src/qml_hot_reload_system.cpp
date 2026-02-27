@@ -33,3 +33,9 @@ void QmlHotReloadSystem::onFileChanged(const QString &filePath)
     loader_registry_->updateAll();
     emit reloadCompleted();
 }
+
+void QmlHotReloadSystem::triggerInitialLoad()
+{
+    qDebug() << "QmlHotReloadSystem: Triggering initial load...";
+    loader_registry_->updateAll();
+}
