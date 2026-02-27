@@ -36,6 +36,8 @@ set(PROJECT_SOURCES
     src/data_model.cpp
     src/qml_reloader.h
     src/qml_reloader.cpp
+    src/qml_dynamic_loader.h      # ← 添加
+    src/qml_dynamic_loader.cpp 
 )
 
 # ===== QML文件列表 =====

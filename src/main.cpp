@@ -9,39 +9,42 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     
+    // ===== 设置Qt Quick Controls样式 =====
+    qputenv("QT_QUICK_CONTROLS_STYLE", "Material");
+    
     // ===== 创建QML引擎 =====
     QQmlApplicationEngine engine;
     
-    // ===== 定义QML源目录 =====
     QString qmlSourceDir = QML_SOURCE_DIR;
     qDebug() << "QML Source Directory:" << qmlSourceDir;
     
-    // ===== 添加QML导入路径 =====
     engine.addImportPath(qmlSourceDir);
     
-    // ===== 创建QML热重载器 =====
+    // ===== 创建热重载器 =====
     QmlReloader reloader(&engine);
-    
-    // ===== 设置主QML文件 =====
     QString mainQmlFile = qmlSourceDir + "/main.qml";
     reloader.set_main_qml_file(QUrl::fromLocalFile(mainQmlFile));
-    
-    // ===== 监视QML文件变化 =====
     reloader.watch_directory(qmlSourceDir);
     
     // ===== 加载主QML文件 =====
     qDebug() << "Loading QML file:" << mainQmlFile;
     engine.load(QUrl::fromLocalFile(mainQmlFile));
     
-    // ===== 检查是否成功加载 =====
     if (engine.rootObjects().isEmpty()) {
         qCritical() << "Failed to load QML file!";
         return -1;
     }
     
     qDebug() << "Application started successfully";
-    qDebug() << "Watching for QML file changes...";
     
-    // ===== 运行应用事件循环 =====
+    // ===== 关键：在启动后立即加载初始的ContentView.qml =====
+    // 延迟0ms确保QML已完全初始化
+    QTimer::singleShot(0, &reloader, [&reloader, qmlSourceDir]() {
+        qDebug() << "Loading initial ContentView.qml...";
+        
+        // 直接调用reload_with_component来加载初始内容
+        reloader.loadInitialContent(qmlSourceDir + "/ContentView.qml");
+    });
+    
     return app.exec();
 }

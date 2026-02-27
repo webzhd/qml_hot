@@ -1,5 +1,6 @@
 // src/qml_reloader.cpp
 #include "qml_reloader.h"
+#include "qml_dynamic_loader.h"
 #include <QDebug>
 #include <QDir>
 #include <QTimer>
@@ -10,7 +11,7 @@ QmlReloader::QmlReloader(QQmlApplicationEngine *engine, QObject *parent)
     , engine_(engine)
     , watcher_(new QFileSystemWatcher(this))
     , debounce_timer_(new QTimer(this))
-    , content_component_(nullptr)
+    , dynamic_loader_(new QmlDynamicLoader(engine, this))
 {
     Q_ASSERT(engine_ != nullptr);
     
@@ -60,6 +61,12 @@ void QmlReloader::watch_directory(const QString &path)
     }
 }
 
+void QmlReloader::loadInitialContent(const QString &contentViewPath)
+{
+    qDebug() << "Loading initial content from:" << contentViewPath;
+    performReload(contentViewPath);
+}
+
 void QmlReloader::on_file_changed(const QString &filePath)
 {
     if (!filePath.endsWith(".qml")) {
@@ -87,12 +94,13 @@ void QmlReloader::do_reload()
         
     } catch (const std::exception &e) {
         qWarning() << "Exception during reload:" << e.what();
+        full_reload();
     }
 }
 
 void QmlReloader::reload_with_component()
 {
-    qDebug() << "Triggering QML reload...";
+    qDebug() << "Triggering Loader reload...";
     
     auto rootObjects = engine_->rootObjects();
     if (rootObjects.isEmpty()) {
@@ -100,27 +108,72 @@ void QmlReloader::reload_with_component()
         return;
     }
     
-    // ===== 查找mainWindow =====
-    QObject *mainWindow = nullptr;
+    // ===== 获取ContentView.qml的路径 =====
+    QString qmlDir = main_qml_file_.toLocalFile();
+    qmlDir = qmlDir.left(qmlDir.lastIndexOf("/"));
+    QString contentViewPath = qmlDir + "/ContentView.qml";
+    
+    performReload(contentViewPath);
+}
+
+void QmlReloader::performReload(const QString &contentViewPath)
+{
+    auto rootObjects = engine_->rootObjects();
+    if (rootObjects.isEmpty()) {
+        qWarning() << "No root objects found!";
+        return;
+    }
+    
+    // ===== 查找contentLoader =====
+    QObject *contentLoader = nullptr;
     for (auto obj : rootObjects) {
-        if (obj->objectName() == "mainWindow") {
-            mainWindow = obj;
+        contentLoader = obj->findChild<QObject*>("contentLoader");
+        if (contentLoader) {
+            qDebug() << "✓ Found contentLoader";
             break;
         }
     }
     
-    if (!mainWindow) {
-        qWarning() << "mainWindow not found!";
+    if (!contentLoader) {
+        qWarning() << "contentLoader not found!";
         return;
     }
     
-    qDebug() << "✓ Found mainWindow";
+    qDebug() << "Loading ContentView from:" << contentViewPath;
     
-    // ===== 调用QML中的reloadContent函数 =====
-    qDebug() << "Calling mainWindow.reloadContent()...";
-    QMetaObject::invokeMethod(mainWindow, "reloadContent");
+    // ===== 使用动态加载器从磁盘加载QML =====
+    QQmlComponent *newComponent = dynamic_loader_->loadQmlFromFile(contentViewPath);
     
-    qDebug() << "✓ QML reload triggered";
+    if (!newComponent) {
+        qWarning() << "Failed to load ContentView.qml";
+        return;
+    }
+    
+    // ===== 删除旧的item =====
+    QObject *oldItem = contentLoader->property("item").value<QObject*>();
+    if (oldItem) {
+        qDebug() << "Deleting old item...";
+        oldItem->deleteLater();
+    }
+    
+    // ===== 创建新的item =====
+    qDebug() << "Creating new item...";
+    QObject *newItem = newComponent->create(engine_->rootContext());
+    
+    if (!newItem) {
+        qWarning() << "Failed to create item!";
+        for (const auto &error : newComponent->errors()) {
+            qWarning() << error.toString();
+        }
+        delete newComponent;
+        return;
+    }
+    
+    // ===== 设置到Loader =====
+    qDebug() << "Updating Loader...";
+    contentLoader->setProperty("sourceComponent", QVariant::fromValue(newComponent));
+    
+    qDebug() << "✓ QML reload successful";
     emit reload_finished();
     qDebug() << "===================================";
 }
