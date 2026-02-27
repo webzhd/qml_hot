@@ -59,9 +59,17 @@ qt_add_executable(${PROJECT_NAME}
 qt_add_qml_module(${PROJECT_NAME}
     URI com.example.models              # QML模块URI
     VERSION 1.0                         # 版本
-    QML_FILES ${PROJECT_QML_FILES}      # QML文件
+    # QML_FILES ${PROJECT_QML_FILES}      # QML文件
     SOURCES
         ${PROJECT_SOURCES}              # C++源文件
+)
+
+# ===== 复制QML文件到输出目录（运行时使用）=====
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/qml"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/qml"
+    COMMENT "Copying QML files to output directory"
 )
 
 # ===== 链接库 =====
