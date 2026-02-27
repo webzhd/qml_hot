@@ -17,8 +17,13 @@ public:
 
     bool reloadLoader(QObject *loaderObj, const QString &qmlFilePath);
 
+private slots:
+    void onLoaderStatusChanged();
+
 private:
     QQmlApplicationEngine *engine_;
+    QQmlComponent *pending_component_ = nullptr;
+    QObject *target_loader_ = nullptr;
 };
 
 #endif
