@@ -22,19 +22,22 @@ void QmlLoaderRegistry::registerLoader(const QString &loaderName,
 
 void QmlLoaderRegistry::updateAll()
 {
-    qDebug() << "QmlLoaderRegistry: Updating all loaders...";
+    qDebug() << "\n==========================================";
+    qDebug() << "[UPDATE] QmlLoaderRegistry: Updating all loaders...";
+    qDebug() << "==========================================";
 
     for (auto it = loader_map_.constBegin(); it != loader_map_.constEnd(); ++it) {
         QObject *loaderObj = findLoader(it.key());
         if (!loaderObj) {
-            qWarning() << "QmlLoaderRegistry: Loader not found:" << it.key();
+            qWarning() << "[UPDATE] Loader not found:" << it.key();
             continue;
         }
-        qDebug() << "QmlLoaderRegistry: Reloading" << it.key() << "->" << it.value();
+        qDebug() << "[UPDATE] Calling reloadLoader for:" << it.key();
         dynamic_loader_->reloadLoader(loaderObj, it.value());
     }
 
-    qDebug() << "QmlLoaderRegistry: All loaders updated";
+    qDebug() << "[UPDATE] All loaders updated";
+    qDebug() << "==========================================\n";
 }
 
 QObject *QmlLoaderRegistry::findLoader(const QString &loaderName) const
@@ -42,8 +45,10 @@ QObject *QmlLoaderRegistry::findLoader(const QString &loaderName) const
     for (QObject *root : engine_->rootObjects()) {
         QObject *found = root->findChild<QObject *>(loaderName);
         if (found) {
+            qDebug() << "[FIND] Found loader:" << loaderName;
             return found;
         }
     }
+    qWarning() << "[FIND] Loader not found:" << loaderName;
     return nullptr;
 }
