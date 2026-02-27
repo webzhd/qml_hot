@@ -2,8 +2,11 @@
 #include "qml_dynamic_loader.h"
 #include <QDebug>
 #include <QUrl>
+#include <QQmlComponent>
+#include <QMetaObject>
+#include <QTimer>
 
-QmlDynamicLoader::QmlDynamicLoader(QQmlEngine *engine, QObject *parent)
+QmlDynamicLoader::QmlDynamicLoader(QQmlApplicationEngine *engine, QObject *parent)
     : QObject(parent)
     , engine_(engine)
 {
@@ -21,18 +24,45 @@ bool QmlDynamicLoader::reloadLoader(QObject *loaderObj, const QString &qmlFilePa
     qDebug() << "QmlDynamicLoader: Reloading" << loaderObj->objectName()
              << "with" << qmlFilePath;
 
-    // Reset source to empty first so the cache can be cleared cleanly
-    loaderObj->setProperty("source", QVariant(QUrl()));
+    // ===== 获取 mainWindow =====
+    QObject *mainWindow = nullptr;
+    
+    for (QObject *root : engine_->rootObjects()) {
+        if (root->objectName() == "mainWindow") {
+            mainWindow = root;
+            break;
+        }
+    }
 
-    // Clear component cache after unloading the old component
+    if (!mainWindow) {
+        qWarning() << "QmlDynamicLoader: mainWindow not found!";
+        return false;
+    }
+
+    qDebug() << "✓ Found mainWindow";
+
+    // ===== 清除缓存 =====
     engine_->clearComponentCache();
     qDebug() << "QmlDynamicLoader: Component cache cleared";
 
-    // Set new source to reload from disk
-    const QUrl newUrl = QUrl::fromLocalFile(qmlFilePath);
-    loaderObj->setProperty("source", newUrl);
+    // ===== 设置 contentViewPath 属性（关键！）=====
+    // 将完整路径传给 QML，这样 QML 可以正确加载
+    bool pathSet = mainWindow->setProperty("contentViewPath", QUrl::fromLocalFile(qmlFilePath).toString());
+    if (!pathSet) {
+        qWarning() << "QmlDynamicLoader: Failed to set contentViewPath property!";
+        return false;
+    }
+    qDebug() << "QmlDynamicLoader: contentViewPath set to:" << qmlFilePath;
 
-    qDebug() << "QmlDynamicLoader: Reload triggered for" << loaderObj->objectName()
-             << "source:" << newUrl;
+    // ===== 调用 QML 中的 reloadContent() 方法 =====
+    qDebug() << "QmlDynamicLoader: Calling mainWindow.reloadContent()...";
+    bool success = QMetaObject::invokeMethod(mainWindow, "reloadContent");
+    
+    if (!success) {
+        qWarning() << "QmlDynamicLoader: Failed to invoke reloadContent method!";
+        return false;
+    }
+
+    qDebug() << "✓ QML reload triggered successfully";
     return true;
 }

@@ -3,7 +3,7 @@
 #define QML_DYNAMIC_LOADER_H
 
 #include <QObject>
-#include <QQmlEngine>
+#include <QQmlApplicationEngine>  // 改这里！
 
 /**
  * QML动态加载器
@@ -20,16 +20,13 @@ class QmlDynamicLoader : public QObject
 public:
     /**
      * 构造函数
-     * @param engine QML引擎指针
+     * @param engine QML应用引擎指针
      * @param parent 父对象
      */
-    explicit QmlDynamicLoader(QQmlEngine *engine, QObject *parent = nullptr);
+    explicit QmlDynamicLoader(QQmlApplicationEngine *engine, QObject *parent = nullptr);  // 改这里！
 
     /**
      * 将QML文件重新加载到Loader对象
-     *
-     * 先将Loader的source清空，再设为新URL，
-     * 以确保即使路径相同也会触发重新加载。
      *
      * @param loaderObj   目标Loader对象（需具有source属性）
      * @param qmlFilePath QML文件的绝对路径
@@ -38,7 +35,7 @@ public:
     bool reloadLoader(QObject *loaderObj, const QString &qmlFilePath);
 
 private:
-    QQmlEngine *engine_;
+    QQmlApplicationEngine *engine_;  // 改这里！
 };
 
 #endif // QML_DYNAMIC_LOADER_H
